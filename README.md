@@ -26,7 +26,11 @@ Syntax colors, border glyphs, and the header color all come from your active omp
 
 ## Install
 
-Clone it anywhere and point omp at the entry file:
+```bash
+omp plugin install omp-codeblocks
+```
+
+Or clone it anywhere and point omp at the entry file:
 
 ```bash
 git clone https://github.com/michaelfried-dev/omp-codeblocks.git
