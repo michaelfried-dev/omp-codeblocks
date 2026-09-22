@@ -1,0 +1,21 @@
+{
+	"name": "omp-codeblocks",
+	"version": "0.1.0",
+	"type": "module",
+	"description": "Renders markdown code blocks in omp as rounded, self-sizing framed windows with a line-number gutter, plus /cb to copy a block to the clipboard.",
+	"keywords": ["omp", "oh-my-pi", "extension", "tui", "markdown", "syntax-highlighting"],
+	"license": "MIT",
+	"author": "Michael Fried",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/michaelfried-dev/omp-codeblocks.git"
+	},
+	"omp": {
+		"extensions": ["./src/index.ts"]
+	},
+	"peerDependencies": {
+		"@oh-my-pi/pi-coding-agent": ">=17",
+		"@oh-my-pi/pi-tui": ">=17"
+	},
+	"files": ["src", "README.md", "LICENSE"]
+}
