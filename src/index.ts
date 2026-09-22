@@ -23,10 +23,10 @@
  */
 import { getMarkdownTheme, Markdown } from "@oh-my-pi/pi-coding-agent";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
-import type { MarkdownTheme } from "@oh-my-pi/pi-tui";
+import type { AutocompleteItem, MarkdownTheme } from "@oh-my-pi/pi-tui";
 import { copyToClipboard } from "./clipboard";
 import { buildFrame, frameWidth, MIN_FRAME_WIDTH } from "./frame";
-import { BlockRegistry } from "./registry";
+import { BlockRegistry, type CodeBlockRecord } from "./registry";
 
 /** Marks an object this extension has already patched, across reloads. */
 const PATCHED = Symbol.for("omp-codeblocks.patched");
@@ -39,6 +39,8 @@ const UNFRAMED_LANGS: Record<string, true> = { diff: true, patch: true, udiff: t
 
 /** How often to re-check the patch, catching theme switches made while idle. */
 const REPATCH_INTERVAL_MS = 5000;
+/** Cap on how many blocks are offered as argument completions. */
+const COMPLETION_LIMIT = 10;
 
 /** Width most recently handed to `Markdown.render()`, observed by the probe. */
 let lastRenderWidth = 80;
@@ -106,6 +108,46 @@ function installThemePatch(registry: BlockRegistry): void {
 	markdownTheme[PATCHED] = true;
 }
 
+/**
+ * Argument completions for `/copy-block`: the rendered blocks, newest first,
+ * each keyed by the index shown in its frame footer. Numeric prefixes match
+ * the index, anything else matches the declared language.
+ */
+function blockCompletions(
+	registry: BlockRegistry,
+	argumentPrefix: string,
+): AutocompleteItem[] | null {
+	const normalized = argumentPrefix.trim().toLowerCase();
+	if (normalized.includes(" ")) return null;
+
+	const records = registry
+		.indices()
+		.reverse()
+		.map(index => registry.get(index))
+		.filter((record): record is CodeBlockRecord => record !== undefined);
+	if (records.length === 0) return null;
+
+	const numeric = /^\d+$/.test(normalized);
+	const items = records
+		.filter(record => {
+			const target = numeric
+				? String(record.index)
+				: (record.lang?.trim() || "text").toLowerCase();
+			return normalized.length === 0 || target.startsWith(normalized);
+		})
+		.slice(0, COMPLETION_LIMIT)
+		.map(record => {
+			const lineCount = record.code.split("\n").length;
+			return {
+				value: String(record.index),
+				label: `#${record.index} · ${record.lang?.trim() || "text"}`,
+				description: record.code.split("\n")[0]?.trim().slice(0, 60) || undefined,
+				hint: `${lineCount} line${lineCount === 1 ? "" : "s"}`,
+			};
+		});
+	return items.length > 0 ? items : null;
+}
+
 export default function ompCodeblocks(pi: ExtensionAPI): void {
 	const registry = new BlockRegistry();
 	pi.setLabel("Code Blocks");
@@ -154,6 +196,7 @@ export default function ompCodeblocks(pi: ExtensionAPI): void {
 	};
 	pi.registerCommand("copy-block", {
 		description: "Copy a code block to the clipboard: [block number], or omit for the latest",
+		getArgumentCompletions: argumentPrefix => blockCompletions(registry, argumentPrefix),
 		handler: copyBlock,
 	});
 }

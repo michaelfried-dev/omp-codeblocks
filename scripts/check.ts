@@ -14,13 +14,24 @@ await initTheme(false, "nerd", false, "dark-sunset-custom", "dark-sunset-custom"
 
 const handlers = new Map<string, (event: unknown, ctx: unknown) => unknown>();
 const commands = new Map<string, (args: string, ctx: unknown) => Promise<void>>();
+const completions = new Map<
+	string,
+	(prefix: string) => { value: string; label: string; description?: string; hint?: string }[] | null
+>();
 const pi = {
 	setLabel() {},
 	on(event: string, handler: (event: unknown, ctx: unknown) => unknown) {
 		handlers.set(event, handler);
 	},
-	registerCommand(name: string, definition: { handler: (args: string, ctx: unknown) => Promise<void> }) {
+	registerCommand(
+		name: string,
+		definition: {
+			handler: (args: string, ctx: unknown) => Promise<void>;
+			getArgumentCompletions?: (prefix: string) => { value: string; label: string; description?: string; hint?: string }[] | null;
+		},
+	) {
 		commands.set(name, definition.handler);
+		if (definition.getArgumentCompletions) completions.set(name, definition.getArgumentCompletions);
 	},
 };
 ompCodeblocks(pi as never);
@@ -140,6 +151,48 @@ for (const paddingX of [1, 0]) {
 	notifications.length = 0;
 	await commands.get("copy-block")?.("9999", ctx);
 	check("/copy-block rejects an unknown index", notifications.some(n => n.includes("No block")), notifications.join(" | "));
+}
+
+// ── /copy-block suggests rendered blocks for argument autocomplete ──
+{
+	const fn = completions.get("copy-block");
+	check("copy-block registers argument completions", fn !== undefined);
+	if (fn) {
+		// Re-render the known block so its index is stable, then read the list.
+		const rows = render("```ts\nconst answer = 42;\n```", 60, 1);
+		const index = /─ #(\d+) ─/.exec(plain(rows.join("\n")))?.[1] ?? "";
+		const all = fn("") ?? [];
+		check(
+			"completions: empty prefix lists blocks in descending index order",
+			all.length > 0 &&
+				all.every(item => /^\d+$/.test(item.value)) &&
+				new Set(all.map(item => item.value)).size === all.length &&
+				Number(all[0].value) === Math.max(...all.map(item => Number(item.value))) &&
+				all.every(item => item.label.startsWith(`#${item.value} · `)),
+			JSON.stringify(all.slice(0, 3)),
+		);
+
+		const newest = all[0]?.value ?? "";
+		const byIndex = fn(newest[0]) ?? [];
+		check(
+			"completions: a numeric prefix filters on the index",
+			byIndex.length > 0 && byIndex.every(item => item.value.startsWith(newest[0])) && byIndex.some(item => item.value === newest),
+			JSON.stringify(byIndex.map(item => item.value)),
+		);
+
+		const lang = /#\d+ · (\S+)/.exec(all[0]?.label ?? "")?.[1] ?? "";
+		const byLang = fn(lang) ?? [];
+		check(
+			"completions: a language prefix filters on the declared language",
+			lang !== "" && byLang.length > 0 && byLang.every(item => item.label.endsWith(`· ${lang}`)),
+			JSON.stringify(byLang.map(item => item.label)),
+		);
+
+		const item = all.find(candidate => candidate.value === index);
+		check("completions: the description previews the first code line", item?.description === "const answer = 42;", JSON.stringify(item));
+
+		check("completions: a spaced prefix yields none", fn("1 2") === null);
+	}
 }
 
 process.stdout.write(failures.length === 0 ? "\nAll checks passed.\n" : `\n${failures.length} FAILED\n`);
