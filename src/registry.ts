@@ -9,9 +9,9 @@
  */
 
 export interface CodeBlockRecord {
-	/** 1-based index shown in the frame chip and accepted by `/cb <n>`. */
+	/** 1-based index shown in the frame chip and accepted by `/copy-block <n>`. */
 	index: number;
-	/** Raw, unhighlighted source — what `/cb` puts on the clipboard. */
+	/** Raw, unhighlighted source — what `/copy-block` puts on the clipboard. */
 	code: string;
 	/** Fence info string, when the block declared one. */
 	lang?: string;
@@ -53,7 +53,7 @@ export class BlockRegistry {
 		return this.#byIndex.get(index);
 	}
 
-	/** The most recently rendered block — the target of a bare `/cb`. */
+	/** The most recently rendered block — the target of a bare `/copy-block`. */
 	latest(): CodeBlockRecord | undefined {
 		return this.#latest;
 	}

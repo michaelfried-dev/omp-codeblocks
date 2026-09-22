@@ -150,9 +150,8 @@ export default function ompCodeblocks(pi: ExtensionAPI): void {
 		);
 	};
 
-	const description = "Copy a code block to the clipboard: [block number], or omit for the latest";
-	// Registered twice rather than via an alias field: ExtensionAPI has no alias
-	// support, and both names must appear in the slash-command list.
-	pi.registerCommand("cb", { description, handler: copyBlock });
-	pi.registerCommand("copy-block", { description, handler: copyBlock });
+	pi.registerCommand("copy-block", {
+		description: "Copy a code block to the clipboard: [block number], or omit for the latest",
+		handler: copyBlock,
+	});
 }

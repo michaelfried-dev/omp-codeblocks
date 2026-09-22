@@ -1,6 +1,6 @@
 # omp-codeblocks
 
-Renders markdown code blocks in [omp](https://omp.sh) as framed windows that match omp's own tool blocks — rounded border, language header, line-number gutter — and adds `/cb` to copy a block to the clipboard.
+Renders markdown code blocks in [omp](https://omp.sh) as framed windows that match omp's own tool blocks — rounded border, language header, line-number gutter — and adds `/copy-block` to copy a block to the clipboard.
 
 Without it, omp draws fenced blocks as literal ` ``` ` marker lines:
 
@@ -48,9 +48,8 @@ Every frame's footer carries an index — `#4` above. That index is the handle:
 
 | Command | Effect |
 |---|---|
-| `/cb` | Copy the most recently rendered block |
-| `/cb 4` | Copy block `#4` |
-| `/copy-block` | Alias of `/cb`, same arguments |
+| `/copy-block` | Copy the most recently rendered block |
+| `/copy-block 4` | Copy block `#4` |
 
 You get the raw source: no borders, no line numbers, no trailing newline. The copy goes out over OSC 52 first (so it works over SSH, mosh, and tmux) and then through the platform helper — `pbcopy`, `wl-copy`, `xclip`, `xsel`, or `clip.exe`.
 
@@ -87,7 +86,7 @@ bun scripts/preview.ts 76      # render sample markdown and eyeball the frame
 bun scripts/check.ts           # assert geometry, wrapping, fallbacks, clipboard
 ```
 
-`scripts/check.ts` drives real `Markdown` components with the patch installed and asserts on the rows produced: frame rows share one column and width on both padding surfaces, long lines wrap inside the frame, narrow terminals and diff blocks fall back to native fences, and `/cb` lands the raw source on the system clipboard.
+`scripts/check.ts` drives real `Markdown` components with the patch installed and asserts on the rows produced: frame rows share one column and width on both padding surfaces, long lines wrap inside the frame, narrow terminals and diff blocks fall back to native fences, and `/copy-block` lands the raw source on the system clipboard.
 
 For local development against your installed omp, link the packages once:
 

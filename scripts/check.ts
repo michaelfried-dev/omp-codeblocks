@@ -113,33 +113,27 @@ for (const paddingX of [1, 0]) {
 	check("narrow width falls back", rows.some(row => plain(row).includes("```")), plain(rows.join("\n")));
 }
 
-// ── /cb puts the raw source on the clipboard ──
+// ── /copy-block puts the raw source on the clipboard ──
 {
 	const rows = render("```ts\nconst answer = 42;\n```", 60, 1);
 	const index = /─ #(\d+) ─/.exec(plain(rows.join("\n")))?.[1] ?? "";
 	const notifications: string[] = [];
 	const ctx = { ui: { notify: (message: string) => notifications.push(message) } };
 
-	await commands.get("cb")?.(index, ctx);
-	const byIndex = await new Response(Bun.spawn(["pbpaste"], { stdout: "pipe" }).stdout).text();
-	check(`/cb ${index} copies the raw source`, byIndex === "const answer = 42;", JSON.stringify(byIndex));
-	check("/cb reports what it copied", notifications.some(n => n.includes(`#${index}`)), notifications.join(" | "));
-
-	// A bare /cb targets the most recently rendered block.
-	await Bun.spawn(["pbcopy"], { stdin: new TextEncoder().encode("stale") }).exited;
-	await commands.get("cb")?.("", ctx);
-	const latest = await new Response(Bun.spawn(["pbpaste"], { stdout: "pipe" }).stdout).text();
-	check("bare /cb copies the latest block", latest === "const answer = 42;", JSON.stringify(latest));
-
-	// The alias must reach the same handler and the same registry.
-	await Bun.spawn(["pbcopy"], { stdin: new TextEncoder().encode("stale") }).exited;
 	await commands.get("copy-block")?.(index, ctx);
-	const viaAlias = await new Response(Bun.spawn(["pbpaste"], { stdout: "pipe" }).stdout).text();
-	check("/copy-block is an alias of /cb", viaAlias === "const answer = 42;", JSON.stringify(viaAlias));
+	const byIndex = await new Response(Bun.spawn(["pbpaste"], { stdout: "pipe" }).stdout).text();
+	check(`/copy-block ${index} copies the raw source`, byIndex === "const answer = 42;", JSON.stringify(byIndex));
+	check("/copy-block reports what it copied", notifications.some(n => n.includes(`#${index}`)), notifications.join(" | "));
+
+	// A bare /copy-block targets the most recently rendered block.
+	await Bun.spawn(["pbcopy"], { stdin: new TextEncoder().encode("stale") }).exited;
+	await commands.get("copy-block")?.("", ctx);
+	const latest = await new Response(Bun.spawn(["pbpaste"], { stdout: "pipe" }).stdout).text();
+	check("bare /copy-block copies the latest block", latest === "const answer = 42;", JSON.stringify(latest));
 
 	notifications.length = 0;
-	await commands.get("cb")?.("9999", ctx);
-	check("/cb rejects an unknown index", notifications.some(n => n.includes("No block")), notifications.join(" | "));
+	await commands.get("copy-block")?.("9999", ctx);
+	check("/copy-block rejects an unknown index", notifications.some(n => n.includes("No block")), notifications.join(" | "));
 }
 
 process.stdout.write(failures.length === 0 ? "\nAll checks passed.\n" : `\n${failures.length} FAILED\n`);
