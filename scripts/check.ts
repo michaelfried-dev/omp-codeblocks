@@ -125,11 +125,17 @@ for (const paddingX of [1, 0]) {
 	check(`/copy-block ${index} copies the raw source`, byIndex === "const answer = 42;", JSON.stringify(byIndex));
 	check("/copy-block reports what it copied", notifications.some(n => n.includes(`#${index}`)), notifications.join(" | "));
 
-	// A bare /copy-block targets the most recently rendered block.
+	// A bare /copy-block targets the most recently rendered block and names
+	// the rest of the session's blocks inline so one can be picked up next.
 	await Bun.spawn(["pbcopy"], { stdin: new TextEncoder().encode("stale") }).exited;
 	await commands.get("copy-block")?.("", ctx);
 	const latest = await new Response(Bun.spawn(["pbpaste"], { stdout: "pipe" }).stdout).text();
 	check("bare /copy-block copies the latest block", latest === "const answer = 42;", JSON.stringify(latest));
+	check(
+		"bare /copy-block lists the other blocks inline",
+		notifications.some(message => message.includes("(latest)") && message.includes("1, 2, 3, 4")),
+		JSON.stringify(notifications),
+	);
 
 	notifications.length = 0;
 	await commands.get("copy-block")?.("9999", ctx);

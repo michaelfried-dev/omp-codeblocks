@@ -142,14 +142,16 @@ export default function ompCodeblocks(pi: ExtensionAPI): void {
 			ctx.ui.notify(`Could not reach a clipboard for block #${record.index}`, "error");
 			return;
 		}
+		// A bare invocation shows the rest of the session inline so the user
+		// can point at a specific one on the next call.
+		const others = registry.indices().filter(n => n !== record.index);
 		ctx.ui.notify(
 			`Copied block #${record.index} — ${lineCount} line${lineCount === 1 ? "" : "s"}${
 				record.lang ? ` of ${record.lang}` : ""
-			}`,
+			}${argument.length === 0 ? " (latest)" : ""}${others.length ? ` · others: ${others.join(", ")}` : ""}`,
 			"info",
 		);
 	};
-
 	pi.registerCommand("copy-block", {
 		description: "Copy a code block to the clipboard: [block number], or omit for the latest",
 		handler: copyBlock,
