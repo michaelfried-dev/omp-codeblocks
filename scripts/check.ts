@@ -42,11 +42,8 @@ function frameColumn(row: string): number {
 	return plain(row).search(/[\u256d\u2570\u2502]/);
 }
 
-function render(text: string, width: number, paddingX: number, passes = 1): readonly string[] {
-	const markdown = new Markdown(text, paddingX, 0, getMarkdownTheme(), undefined, 0);
-	let rows: readonly string[] = [];
-	for (let i = 0; i < passes; i++) rows = markdown.render(width);
-	return rows;
+function render(text: string, width: number, paddingX: number): readonly string[] {
+	return new Markdown(text, paddingX, 0, getMarkdownTheme(), undefined, 0).render(width);
 }
 
 // ── Frame geometry, on both markdown surfaces (paddingX 1 and 0) ──
