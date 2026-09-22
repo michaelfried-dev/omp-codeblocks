@@ -119,37 +119,40 @@ export default function ompCodeblocks(pi: ExtensionAPI): void {
 	pi.on("turn_start", async () => installThemePatch(registry));
 	pi.on("message_start", async () => installThemePatch(registry));
 
-	pi.registerCommand("cb", {
-		description: "Copy a code block to the clipboard: /cb [block number]",
-		handler: async (args, ctx) => {
-			const argument = args.trim();
-			if (argument.length > 0 && !/^\d+$/.test(argument)) {
-				ctx.ui.notify(`Not a block number: ${argument}`, "error");
-				return;
-			}
-			const record = argument.length > 0 ? registry.get(Number(argument)) : registry.latest();
-			if (!record) {
-				const known = registry.indices();
-				ctx.ui.notify(
-					known.length === 0
-						? "No code blocks rendered yet"
-						: `No block #${argument} — available: ${known.join(", ")}`,
-					"warning",
-				);
-				return;
-			}
-			const lineCount = record.code.split("\n").length;
-			const outcome = await copyToClipboard(record.code);
-			if (outcome === "failed") {
-				ctx.ui.notify(`Could not reach a clipboard for block #${record.index}`, "error");
-				return;
-			}
+	const copyBlock = async (args: string, ctx: { ui: { notify: (message: string, level: string) => void } }) => {
+		const argument = args.trim();
+		if (argument.length > 0 && !/^\d+$/.test(argument)) {
+			ctx.ui.notify(`Not a block number: ${argument}`, "error");
+			return;
+		}
+		const record = argument.length > 0 ? registry.get(Number(argument)) : registry.latest();
+		if (!record) {
+			const known = registry.indices();
 			ctx.ui.notify(
-				`Copied block #${record.index} — ${lineCount} line${lineCount === 1 ? "" : "s"}${
-					record.lang ? ` of ${record.lang}` : ""
-				}`,
-				"info",
+				known.length === 0
+					? "No code blocks rendered yet"
+					: `No block #${argument} — available: ${known.join(", ")}`,
+				"warning",
 			);
-		},
-	});
+			return;
+		}
+		const lineCount = record.code.split("\n").length;
+		const outcome = await copyToClipboard(record.code);
+		if (outcome === "failed") {
+			ctx.ui.notify(`Could not reach a clipboard for block #${record.index}`, "error");
+			return;
+		}
+		ctx.ui.notify(
+			`Copied block #${record.index} — ${lineCount} line${lineCount === 1 ? "" : "s"}${
+				record.lang ? ` of ${record.lang}` : ""
+			}`,
+			"info",
+		);
+	};
+
+	const description = "Copy a code block to the clipboard: [block number], or omit for the latest";
+	// Registered twice rather than via an alias field: ExtensionAPI has no alias
+	// support, and both names must appear in the slash-command list.
+	pi.registerCommand("cb", { description, handler: copyBlock });
+	pi.registerCommand("copy-block", { description, handler: copyBlock });
 }

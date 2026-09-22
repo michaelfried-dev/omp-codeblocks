@@ -131,6 +131,12 @@ for (const paddingX of [1, 0]) {
 	const latest = await new Response(Bun.spawn(["pbpaste"], { stdout: "pipe" }).stdout).text();
 	check("bare /cb copies the latest block", latest === "const answer = 42;", JSON.stringify(latest));
 
+	// The alias must reach the same handler and the same registry.
+	await Bun.spawn(["pbcopy"], { stdin: new TextEncoder().encode("stale") }).exited;
+	await commands.get("copy-block")?.(index, ctx);
+	const viaAlias = await new Response(Bun.spawn(["pbpaste"], { stdout: "pipe" }).stdout).text();
+	check("/copy-block is an alias of /cb", viaAlias === "const answer = 42;", JSON.stringify(viaAlias));
+
 	notifications.length = 0;
 	await commands.get("cb")?.("9999", ctx);
 	check("/cb rejects an unknown index", notifications.some(n => n.includes("No block")), notifications.join(" | "));

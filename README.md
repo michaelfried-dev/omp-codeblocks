@@ -50,6 +50,7 @@ Every frame's footer carries an index — `#4` above. That index is the handle:
 |---|---|
 | `/cb` | Copy the most recently rendered block |
 | `/cb 4` | Copy block `#4` |
+| `/copy-block` | Alias of `/cb`, same arguments |
 
 You get the raw source: no borders, no line numbers, no trailing newline. The copy goes out over OSC 52 first (so it works over SSH, mosh, and tmux) and then through the platform helper — `pbcopy`, `wl-copy`, `xclip`, `xsel`, or `clip.exe`.
 
