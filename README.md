@@ -51,6 +51,8 @@ Every frame's footer carries an index — `#4` above. That index is the handle:
 | `/copy-block` | Copy the most recently rendered block |
 | `/copy-block 4` | Copy block `#4` |
 
+Type `/copy-block ` and the blocks you have rendered are offered as completions, newest first — `#4 · typescript` with its first line as the description and its length as a hint. A digit filters by index, anything else filters by language (`py` narrows to the Python blocks).
+
 You get the raw source: no borders, no line numbers, no trailing newline. The copy goes out over OSC 52 first (so it works over SSH, mosh, and tmux) and then through the platform helper — `pbcopy`, `wl-copy`, `xclip`, `xsel`, or `clip.exe`.
 
 Indices are stable per block content and reset each session. omp's built-in `/copy` still works if you prefer browsing a tree of copy targets.

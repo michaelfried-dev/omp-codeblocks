@@ -2,7 +2,7 @@
 	"name": "omp-codeblocks",
 	"version": "0.1.0",
 	"type": "module",
-	"description": "Renders markdown code blocks in omp as rounded, self-sizing framed windows with a line-number gutter, plus /cb to copy a block to the clipboard.",
+	"description": "Renders markdown code blocks in omp as rounded, self-sizing framed windows with a line-number gutter, plus /copy-block to copy a block to the clipboard.",
 	"keywords": ["omp", "oh-my-pi", "extension", "tui", "markdown", "syntax-highlighting"],
 	"license": "MIT",
 	"author": "Michael Fried",
