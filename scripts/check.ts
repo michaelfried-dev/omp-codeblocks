@@ -65,6 +65,24 @@ for (const paddingX of [1, 0]) {
 	);
 }
 
+// ── Framing preserves the native highlighter's colors ──
+{
+	const rows = render('```ts\n// note\nexport const n = 42;\nconst s = "str";\n```', 70, 1);
+	const colorsPerRow = rows.map(row => new Set([...row.matchAll(/\x1b\[38;2;([\d;]+)m/g)].map(m => m[1])));
+	const richest = Math.max(...colorsPerRow.map(colors => colors.size));
+	check("code rows carry multiple syntax colors", richest >= 4, `most colors on one row: ${richest}`);
+
+	// A wrapped continuation must re-open the active style, not render bare.
+	const long = `const message = "${"y".repeat(120)}";`;
+	const wrapped = render(`\`\`\`ts\n${long}\n\`\`\``, 70, 1).filter(row => plain(row).includes("│"));
+	const continuation = wrapped[1] ?? "";
+	check(
+		"wrapped continuation keeps the string color",
+		/\x1b\[38;2;[\d;]+m/.test(continuation.replace(/^[^\u2502]*\u2502/, "")),
+		JSON.stringify(continuation.slice(0, 60)),
+	);
+}
+
 // ── Long lines wrap inside the frame instead of overflowing it ──
 {
 	const long = `const message = "${"x".repeat(200)}";`;
