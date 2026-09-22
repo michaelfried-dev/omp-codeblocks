@@ -4,13 +4,13 @@ Renders markdown code blocks in [omp](https://omp.sh) as framed windows that mat
 
 Without it, omp draws fenced blocks as literal ` ``` ` marker lines:
 
-```text
+````text
 ```typescript
 export function greet(name: string): string {
   return `Hello, ${name}!`;
 }
 ```
-```
+````
 
 With it:
 
